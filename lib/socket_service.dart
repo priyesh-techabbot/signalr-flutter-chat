@@ -1,81 +1,56 @@
-import 'package:get/get_rx/get_rx.dart';
-import 'package:signalr_netcore/signalr_client.dart';
+import 'package:get/get.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class SocketService {
   static final SocketService instance = SocketService._();
   factory SocketService() => instance;
   SocketService._();
 
-  final serverUrl = "https://192.168.1.133:7027/chathub";
+  final serverUrl =
+      "http://localhost:8080"; // Update to match your Node.js server
 
-  Rxn<Map<String, String>> userList = Rxn();
-  RxList<List<String>> messages = RxList();
-  String? currentId;
-  late HubConnection hubConnection;
+  late IO.Socket socket;
 
-  bool registered = false;
+  void initialize() {
+    print("Connecting to server: $serverUrl");
 
-  void initalize() async {
-    print("serverUrl => $serverUrl");
-    hubConnection = HubConnectionBuilder().withUrl(serverUrl).build();
+    socket = IO.io(
+        serverUrl,
+        IO.OptionBuilder()
+            .setTransports(['websocket'])
+            .setAuth({
+              'token':
+                  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InByaXllc2gxMTEiLCJpYXQiOjE3NDM1MTM1NjAsImV4cCI6MTc0MzU5OTk2MH0.yUNpvb8Yrb21jHjOos8slKpeq9ndLV40QEudSQAGkiE'
+            })
+            .disableAutoConnect()
+            .build());
 
-    await hubConnection.start();
+    socket.connect();
 
-    currentId = hubConnection.connectionId;
+    socket.onConnect((_) {
+      print("Connected to Socket.io Server: ${socket.id}");
+    });
 
-    print("Connection => ${hubConnection.connectionId}");
-    print("State => ${hubConnection.state}");
+    socket.on("receive-message", (data) {
+      print("New Message Received: $data");
+      print(data.runtimeType);
+    });
 
-    hubConnection.on(
-      "ReceiveMessage",
-      (arguments) {
-        print("on ReceiveMessage");
-        print(arguments);
-        print(arguments.runtimeType);
-        if (arguments != null && arguments.isNotEmpty) {
-          messages.add(arguments as List<String>);
-        }
-      },
-    );
+    socket.onDisconnect((_) {
+      print("Disconnected from Server");
+    });
 
-    hubConnection.on(
-      "UpdateUserList",
-      (arguments) {
-        print("on UpdateUserList");
-        print(arguments);
-
-        if (arguments != null && arguments.isNotEmpty) {
-          userList.value = arguments.first as Map<String, String>;
-
-          registerUser();
-        }
-      },
-    );
-
-    hubConnection.stateStream.listen(
-      (event) {
-        print("hubConnection.state => $event");
-      },
-    );
-
-    hubConnection.onclose(
-      ({error}) {
-        print("hubConnection.onclose");
-        print(error);
+    socket.onError(
+      (data) {
+        print("onError: $data");
+        print(data.runtimeType);
       },
     );
   }
 
-  void registerUser() {
-    if (userList.value != null && currentId != null && !registered) {
-      registered = true;
-      userList.value![currentId!] =
-          "Guest_${userList.value!.entries.length + 1}";
-      hubConnection.send("UpdateUserList", args: [userList.value!]);
-    }
-  }
-
-  void sendMessage(String message) {
-    hubConnection.send("ReceiveMessage", args: [currentId!, message]);
+  void sendMessage(String message, String selectedUser) {
+    print("Sending Message: $message to $selectedUser");
+    socket
+        .emit("send-message", {"recipient": selectedUser, "message": message});
   }
 }

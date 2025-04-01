@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:signalr_flutter_chat/socket_service.dart';
 
 void main() {
@@ -29,105 +28,25 @@ class SocketChatScreen extends StatefulWidget {
 }
 
 class _SocketChatScreenState extends State<SocketChatScreen> {
-  Map<String, String> users = {};
-  String? currentUserName;
-
-  List<String> messages = [];
-  String? selectedUser;
-
   TextEditingController controller = TextEditingController();
 
   @override
   void initState() {
-    SocketService.instance.initalize();
+    SocketService.instance.initialize();
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Obx(
-      () {
-        users = {};
-        users.addAll(SocketService.instance.userList.value ?? {});
-        currentUserName = SocketService.instance.userList.value?.keys
-            .toList()
-            .firstWhereOrNull(
-                (element) => element == SocketService.instance.currentId);
-
-        if (currentUserName != null) {
-          users.removeWhere((key, value) => key == currentUserName);
-        }
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(currentUserName != null
-                ? SocketService.instance.userList.value![currentUserName]!
-                : 'SignalR Chat'),
-          ),
-          body: users.isNotEmpty
-              ? Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ListView.separated(
-                          padding: EdgeInsets.zero,
-                          itemBuilder: (context, index) {
-                            var data = users.values.toList()[index];
-                            return InkWell(
-                              onTap: () {
-                                selectedUser = data;
-                                messages.clear();
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(data.toString()),
-                              ),
-                            );
-                          },
-                          separatorBuilder: (context, index) => const Divider(),
-                          itemCount: users.keys.length,
-                        ),
-                      ),
-                      const VerticalDivider(),
-                      Expanded(
-                        flex: 3,
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: ListView.separated(
-                                itemBuilder: (context, index) {
-                                  return Text(messages[index]);
-                                },
-                                itemCount: messages.length,
-                                separatorBuilder: (context, index) {
-                                  return const SizedBox(height: 5);
-                                },
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: TextField(controller: controller)),
-                                IconButton(
-                                  onPressed: () {
-                                    if (controller.text.trim().isNotEmpty) {
-                                      SocketService.instance
-                                          .sendMessage(controller.text.trim());
-                                    }
-                                  },
-                                  icon: const Icon(Icons.send),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                )
-              : null,
-        );
-      },
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Socket'),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          SocketService.instance.sendMessage('Im good WBU?', 'priyesh222');
+        },
+      ),
     );
   }
 }
