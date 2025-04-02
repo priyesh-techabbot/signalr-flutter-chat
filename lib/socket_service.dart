@@ -1,4 +1,6 @@
 import 'package:get/get.dart';
+import 'package:signalr_flutter_chat/chat_database.dart';
+import 'package:signalr_flutter_chat/chat_model.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 class SocketService {
@@ -6,10 +8,13 @@ class SocketService {
   factory SocketService() => instance;
   SocketService._();
 
-  final serverUrl =
-      "http://localhost:8080"; // Update to match your Node.js server
+  final serverUrl = "http://localhost:8080";
 
   late IO.Socket socket;
+
+  late String username;
+  late String access_token;
+  RxInt chatId = RxInt(0);
 
   void initialize() {
     print("Connecting to server: $serverUrl");
@@ -18,10 +23,7 @@ class SocketService {
         serverUrl,
         IO.OptionBuilder()
             .setTransports(['websocket'])
-            .setAuth({
-              'token':
-                  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InByaXllc2gxMTEiLCJpYXQiOjE3NDM1MTM1NjAsImV4cCI6MTc0MzU5OTk2MH0.yUNpvb8Yrb21jHjOos8slKpeq9ndLV40QEudSQAGkiE'
-            })
+            .setAuth({'token': access_token})
             .disableAutoConnect()
             .build());
 
@@ -34,6 +36,17 @@ class SocketService {
     socket.on("receive-message", (data) {
       print("New Message Received: $data");
       print(data.runtimeType);
+      print(data is Map);
+
+      if (data is Map) {
+        ChatDatabase.insertSocketChat(model: data).then(
+          (value) {
+            if (value != null) {
+              chatId.value = value.id;
+            }
+          },
+        );
+      }
     });
 
     socket.onDisconnect((_) {
@@ -48,9 +61,7 @@ class SocketService {
     );
   }
 
-  void sendMessage(String message, String selectedUser) {
-    print("Sending Message: $message to $selectedUser");
-    socket
-        .emit("send-message", {"recipient": selectedUser, "message": message});
+  Future<void> sendMessage(String message, String recBy) async {
+    socket.emit("send-message", {"recipient": recBy, "message": message});
   }
 }
