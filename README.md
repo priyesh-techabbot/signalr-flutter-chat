@@ -28,7 +28,8 @@ Welcome to the Socket/Realtime Chat! This project contains a realtime chatting w
   
 
 ## Screen Shots
-
   
-| ![home](https://raw.githubusercontent.com/priyesh-techabbot/job_seeking_ui/refs/heads/main/home.png) | ![landing](https://raw.githubusercontent.com/priyesh-techabbot/job_seeking_ui/refs/heads/main/landing.png) |![search](https://raw.githubusercontent.com/priyesh-techabbot/job_seeking_ui/refs/heads/main/search.png)|
-|--|--|--|
+| ![Chat GIF](https://raw.githubusercontent.com/priyesh-techabbot/socket-chat-flutter/refs/heads/main/live_chat_flutter.gif) |
+|--|
+
+[Fill Video](https://github.com/priyesh-techabbot/socket-chat-flutter/blob/main/live_chat.mp4?raw=true)
